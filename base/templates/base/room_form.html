@@ -9,8 +9,6 @@
         {% comment %} When we send a POST in Django we need to pass this token, security stuff {% endcomment %}
         {% csrf_token %}
         {{ form.as_p }}
-        {% comment %} <input type="text" name="name" placeholder="Room Name">
-        <input type="text" name="topic.name" placeholder="Room Topic"> {% endcomment %}
         <input type="submit" value="Submit"/>
     </form>
 </div>

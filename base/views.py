@@ -36,3 +36,18 @@ def createRoom(request):
             return redirect('home')
     context = {'form': form}
     return render(request, 'base/room_form.html', context)
+
+# To update a room we need to pass the primary key of the room
+def updateRoom(request, pk):
+    # This is going to get the room that we want to update from the database
+    room = Room.objects.get(id=pk)
+    # This is going to pass the instance of the form prefilled with the data of the room that we want to update
+    form = RoomForm(instance=room)
+    if request.method == 'POST':
+        # This is going to rewrite the form with the new data
+        form = RoomForm(request.POST, instance=room)
+        if form.is_valid():
+            form.save()
+            return redirect('home')
+    context = {'form': form}
+    return render(request, 'base/room_form.html', context)
