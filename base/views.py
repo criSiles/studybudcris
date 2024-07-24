@@ -1,10 +1,11 @@
-# This was used to render the home page and room page before the templates were created.
+# OLD CODE: This was used to render the home page and room page before the templates were created.
 # from django.http import HttpResponse
 from django.shortcuts import redirect, render
-from .models import Room
+from .models import Room, Topic
 from .forms import RoomForm
+# The Q lookup method allow us to make & and | statements in the query
+from django.db.models import Q
 
-# Create your views here.
 
 # OLD CODE, before the db
 # rooms = [
@@ -15,9 +16,18 @@ from .forms import RoomForm
 
 # HOME VIEW
 def home(request):
-    # this Room.objects.all() is used to get all the rooms from the database
-    rooms = Room.objects.all()
-    context = {'rooms': rooms}
+    q = request.GET.get('q') if request.GET.get('q') is not None else ''
+    # this Room.objects.filter(xxxx__icontains=q) is used to get all the rooms from the database that contain the query of topic.name, name or descriptions
+    # icontains is a value that searches if the query contains at least some of the letters in the name
+    rooms = Room.objects.filter(
+        Q(topic__name__icontains=q) | 
+        Q(name__icontains=q) | 
+        Q(descriptions__icontains=q)
+    )
+    room_count = rooms.count()
+    # this Topic.objects.all() is used to get all the topics from the database, i means that is case insensitive
+    topics = Topic.objects.all()
+    context = {'rooms': rooms, 'topics': topics, 'room_count': room_count}
     return render(request, 'base/home.html', context)
 
 # ROOM VIEW
