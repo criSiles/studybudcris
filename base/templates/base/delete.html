@@ -1,0 +1,13 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+{% comment %} We're going to make it generic to make it dinamically and use it for any delete action in our app {% endcomment %}
+<form  method="post" action="">
+    {% csrf_token %}
+    <h1>Are you sure you want to delete "{{obj}}"?</h1>
+    {% comment %} The href is to go back the previous page no matter which is it {% endcomment %}
+    <a href="request.META.HTPP_REFERER">Go back</a>
+    <input type="submit" value="Confirm">
+    </form>
+{% endblock %}
