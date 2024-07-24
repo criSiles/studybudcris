@@ -25,6 +25,10 @@ class Room(models.Model):
     updated = models.DateTimeField(auto_now=True)
     # Every time a new instance of this model is created, this attribute will be set to the current time only the first time.
     created = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        # This array is made to order the rooms by the updated attribute, the '-' means that is going to be ordered in descending order (new first).
+        ordering = ['-updated', '-created']
 
     def __str___(self):
         return self.name
