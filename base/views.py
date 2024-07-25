@@ -1,15 +1,14 @@
-# OLD CODE: This was used to render the home page and room page before the templates were created.
-# from django.http import HttpResponse
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 # The Q lookup method allow us to make & and | statements in the query
 from django.db.models import Q
+# This is used to protect the views from unauthorized users
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from .models import Room, Topic
 from .forms import RoomForm
-
 # This is used to send messages to the user
 from django.contrib import messages
-
 from django.contrib.auth import authenticate, login, logout
 
 # OLD CODE, before the db
@@ -42,6 +41,8 @@ def room(request, pk):
     return render(request, 'base/room.html', context)
 
 # CREATE ROOM VIEW
+# This is a decorator that if  the user is not logged in, it will redirect the user to the login page when try to create a room
+@login_required(login_url='login')
 def createRoom(request):
     form = RoomForm()
     if request.method == 'POST':
@@ -55,13 +56,17 @@ def createRoom(request):
     context = {'form': form}
     return render(request, 'base/room_form.html', context)
 
-# UPDATE ROOM VIEW
 # To update a room we need to pass the primary key of the room
+@login_required(login_url='login')
 def updateRoom(request, pk):
     # This is going to get the room that we want to update from the database
     room = Room.objects.get(id=pk)
     # This is going to pass the instance of the form prefilled with the data of the room that we want to update
     form = RoomForm(instance=room)
+    
+    if request.user != room.host:
+        return HttpResponse('You are not allowed here!')
+    
     if request.method == 'POST':
         # This is going to rewrite the form with the new data
         form = RoomForm(request.POST, instance=room)
@@ -73,8 +78,12 @@ def updateRoom(request, pk):
     return render(request, 'base/room_form.html', context)
 
 # DELETE ROOM VIEW
+@login_required(login_url='login')
 def deleteRoom(request, pk):
     room = Room.objects.get(id=pk)
+    if request.user != room.host:
+        return HttpResponse('You are not allowed here!')
+    
     if request.method == 'POST':
         # This is going to delete the room from the database
         room.delete()
@@ -85,6 +94,9 @@ def deleteRoom(request, pk):
 # LOGIN VIEW
 
 def loginPage(request):
+    if request.user.is_authenticated:
+        return redirect('home')
+    
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
