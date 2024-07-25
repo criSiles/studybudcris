@@ -10,6 +10,7 @@ from .forms import RoomForm
 # This is used to send messages to the user
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import UserCreationForm
 
 # OLD CODE, before the db
 # rooms = [
@@ -94,11 +95,12 @@ def deleteRoom(request, pk):
 # LOGIN VIEW
 
 def loginPage(request):
+    page = 'login'
     if request.user.is_authenticated:
         return redirect('home')
     
     if request.method == 'POST':
-        username = request.POST.get('username')
+        username = request.POST.get('username').lower()
         password = request.POST.get('password')
         print(username, password)
 
@@ -117,9 +119,23 @@ def loginPage(request):
         # Else, send a flash message to the user
         else:
             messages.error(request, 'Username OR password does not exist')
-    context = {}
+    context = {'page': page}
     return render(request, 'base/login_register.html', context)
 
 def logoutUser(request):
     logout(request)
     return redirect('home')
+
+def registerPage(request):
+    form = UserCreationForm()
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.username = user.username.lower()
+            user.save()
+            login(request, user)
+            return redirect('home')
+        else:
+            messages.error(request, 'An error has occurred during registration')
+    return render(request, 'base/login_register.html', {'form': form})
