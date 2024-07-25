@@ -1,11 +1,16 @@
 # OLD CODE: This was used to render the home page and room page before the templates were created.
 # from django.http import HttpResponse
 from django.shortcuts import redirect, render
-from .models import Room, Topic
-from .forms import RoomForm
 # The Q lookup method allow us to make & and | statements in the query
 from django.db.models import Q
+from django.contrib.auth.models import User
+from .models import Room, Topic
+from .forms import RoomForm
 
+# This is used to send messages to the user
+from django.contrib import messages
+
+from django.contrib.auth import authenticate, login, logout
 
 # OLD CODE, before the db
 # rooms = [
@@ -76,3 +81,33 @@ def deleteRoom(request, pk):
         return redirect('home')
     # I pass the obj key like this to make it reusable in the delete.html template
     return render(request, 'base/delete.html', {'obj':room})
+
+# LOGIN VIEW
+
+def loginPage(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        print(username, password)
+
+        try:
+            # Use the User bulit-in model to see if the user exists
+            user = User.objects.get(username=username)
+        except Exception:
+            # If the user does not exist, send a flash message to the user
+            messages.error(request, 'User does not exist')
+
+        user = authenticate(request, username=username, password=password)
+        # If the user exists, log the user in
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+        # Else, send a flash message to the user
+        else:
+            messages.error(request, 'Username OR password does not exist')
+    context = {}
+    return render(request, 'base/login_register.html', context)
+
+def logoutUser(request):
+    logout(request)
+    return redirect('home')
