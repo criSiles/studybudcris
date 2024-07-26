@@ -1,11 +1,11 @@
-from django.http import HttpResponse
 from django.shortcuts import redirect, render
+from django.http import HttpResponse
 # The Q lookup method allow us to make & and | statements in the query
 from django.db.models import Q
 # This is used to protect the views from unauthorized users
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from .models import Room, Topic
+from .models import Room, Topic, Message
 from .forms import RoomForm
 # This is used to send messages to the user
 from django.contrib import messages
@@ -19,7 +19,6 @@ from django.contrib.auth.forms import UserCreationForm
 #     {'id': 3, 'name': 'Frontend Development'}, 
 # ]
 
-# HOME VIEW
 def home(request):
     q = request.GET.get('q') if request.GET.get('q') is not None else ''
     # this Room.objects.filter(xxxx__icontains=q) is used to get all the rooms from the database that contain the query of topic.name, name or descriptions
@@ -35,13 +34,23 @@ def home(request):
     context = {'rooms': rooms, 'topics': topics, 'room_count': room_count}
     return render(request, 'base/home.html', context)
 
-# ROOM VIEW
 def room(request, pk):
     room = Room.objects.get(id=pk)
-    context = {'room': room}
+    room_messages = room.message_set.all().order_by('-created')
+    participants = room.participants.all()
+
+    if request.method == 'POST':
+        message = Message.objects.create(
+            user=request.user,
+            room=room,
+            body=request.POST.get('body')
+        )
+        room.participants.add(request.user)
+        return redirect('room', pk=room.id)
+    
+    context = {'room': room, 'room_messages': room_messages, 'participants': participants} 
     return render(request, 'base/room.html', context)
 
-# CREATE ROOM VIEW
 # This is a decorator that if  the user is not logged in, it will redirect the user to the login page when try to create a room
 @login_required(login_url='login')
 def createRoom(request):
@@ -78,7 +87,6 @@ def updateRoom(request, pk):
     context = {'form': form}
     return render(request, 'base/room_form.html', context)
 
-# DELETE ROOM VIEW
 @login_required(login_url='login')
 def deleteRoom(request, pk):
     room = Room.objects.get(id=pk)
@@ -91,8 +99,6 @@ def deleteRoom(request, pk):
         return redirect('home')
     # I pass the obj key like this to make it reusable in the delete.html template
     return render(request, 'base/delete.html', {'obj':room})
-
-# LOGIN VIEW
 
 def loginPage(request):
     page = 'login'
@@ -139,3 +145,15 @@ def registerPage(request):
         else:
             messages.error(request, 'An error has occurred during registration')
     return render(request, 'base/login_register.html', {'form': form})
+
+@login_required(login_url='login')
+def deleteMessage(request, pk):
+    message= Message.objects.get(id=pk)
+
+    if request.user != message.user:
+        return HttpResponse('You are not allowed here!')
+    
+    if request.method == 'POST':
+        message.delete()
+        return redirect('home')
+    return render(request, 'base/delete.html', {'obj':message})

@@ -12,15 +12,13 @@ class Room(models.Model):
     host = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     # TIP: If you want to use a class inside of another class, you have to define the class first or put it like this 'Topic' in quotes.
     topic= models.ForeignKey(Topic, on_delete=models.SET_NULL, null=True)
-
     # This attribute is type CharField, it only stores strings, we have to specify the max_length of the string.
     name = models.CharField(max_length=200)
     # This attribute is type TextField, it only stores large strings (text), 
     # null=True means that the db can have a instance of this model if this attribute is empty, by default is set to False.
     # blank=True means that the form can be submitted without this attribute, by default is set to False.
     descriptions = models.TextField(null=True, blank=True)
-
-    # participants = 
+    participants = models.ManyToManyField(User, blank=True, related_name='participants')
     # Every time an instance of this model is updated, this attribute will be set to the current time everytime.
     updated = models.DateTimeField(auto_now=True)
     # Every time a new instance of this model is created, this attribute will be set to the current time only the first time.
