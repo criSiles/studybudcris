@@ -7,3 +7,4 @@ class RoomForm(ModelForm):
         model = Room
         # This is going to create all the fields from the model Room that we want to display in the form, for now is all
         fields = '__all__'
+        exclude = ['host', 'participants']

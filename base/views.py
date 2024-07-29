@@ -70,7 +70,9 @@ def createRoom(request):
         # This is going to check if the form is valid
         if form.is_valid():
             # This is going to save the form in the database
-            form.save()
+            room = form.save(commit=False)
+            room.host = request.user
+            room.save()
             return redirect('home')
     context = {'form': form}
     return render(request, 'base/room_form.html', context)
