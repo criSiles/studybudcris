@@ -12,13 +12,6 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm
 
-# OLD CODE, before the db
-# rooms = [
-#     {'id': 1, 'name': 'Lets learn Python!'},
-#     {'id': 2, 'name': 'Design with me'},
-#     {'id': 3, 'name': 'Frontend Development'}, 
-# ]
-
 def home(request):
     q = request.GET.get('q') if request.GET.get('q') is not None else ''
     # this Room.objects.filter(xxxx__icontains=q) is used to get all the rooms from the database that contain the query of topic.name, name or descriptions
@@ -64,17 +57,19 @@ def userProfile(request, pk):
 @login_required(login_url='login')
 def createRoom(request):
     form = RoomForm()
+    topics = Topic.objects.all()
     if request.method == 'POST':
-        print('Printing POST:', request.POST)
-        form = RoomForm(request.POST)
-        # This is going to check if the form is valid
-        if form.is_valid():
-            # This is going to save the form in the database
-            room = form.save(commit=False)
-            room.host = request.user
-            room.save()
-            return redirect('home')
-    context = {'form': form}
+        topic_name = request.POST.get('topic')
+        # If a topic does not exist, it will create a new one if exist it will get the topic
+        topic, created = Topic.objects.get_or_create(name=topic_name)
+        Room.objects.create(
+            host=request.user,
+            topic=topic,
+            name=request.POST.get('name'),
+            descriptions=request.POST.get('descriptions')
+        )
+        return redirect('home')
+    context = {'form': form, 'topics': topics}
     return render(request, 'base/room_form.html', context)
 
 # To update a room we need to pass the primary key of the room
@@ -84,18 +79,18 @@ def updateRoom(request, pk):
     room = Room.objects.get(id=pk)
     # This is going to pass the instance of the form prefilled with the data of the room that we want to update
     form = RoomForm(instance=room)
-    
+    topics = Topic.objects.all()
     if request.user != room.host:
         return HttpResponse('You are not allowed here!')
-    
     if request.method == 'POST':
-        # This is going to rewrite the form with the new data
-        form = RoomForm(request.POST, instance=room)
-        if form.is_valid():
-            # This is going to save the form in the database
-            form.save()
-            return redirect('home')
-    context = {'form': form}
+        topic_name = request.POST.get('topic')
+        topic, created = Topic.objects.get_or_create(name=topic_name)
+        room.name = request.POST.get('name')
+        room.topic = topic
+        room.descriptions = request.POST.get('descriptions')
+        room.save()
+        return redirect('home')
+    context = {'form': form, 'topics': topics, 'room': room}
     return render(request, 'base/room_form.html', context)
 
 @login_required(login_url='login')
@@ -103,7 +98,6 @@ def deleteRoom(request, pk):
     room = Room.objects.get(id=pk)
     if request.user != room.host:
         return HttpResponse('You are not allowed here!')
-    
     if request.method == 'POST':
         # This is going to delete the room from the database
         room.delete()
