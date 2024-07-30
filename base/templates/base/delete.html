@@ -21,6 +21,7 @@
                     <form class="form" action="" method="POST">
                         {% csrf_token %}
                         <div class="form__group">
+                            {% comment %} TODO: Fix when I want to delete a room or a topic I get the obj (1) not the name {% endcomment %}
                             <p>Are you sure you want to delete "{{obj}}"?</p>
                         </div>
 
