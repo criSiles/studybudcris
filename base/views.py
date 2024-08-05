@@ -4,22 +4,20 @@ from django.http import HttpResponse
 from django.db.models import Q
 # This is used to protect the views from unauthorized users
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
-from .models import Room, Topic, Message
-from .forms import RoomForm, UserForm
+from .models import Room, Topic, Message, User
+from .forms import RoomForm, UserForm, MyUserCreationForm
 # This is used to send messages to the user
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.forms import UserCreationForm
 
 def home(request):
     q = request.GET.get('q') if request.GET.get('q') is not None else ''
-    # this Room.objects.filter(xxxx__icontains=q) is used to get all the rooms from the database that contain the query of topic.name, name or descriptions
+    # this Room.objects.filter(xxxx__icontains=q) is used to get all the rooms from the database that contain the query of topic.name, name or description
     # icontains is a value that searches if the query contains at least some of the letters in the name
     rooms = Room.objects.filter(
         Q(topic__name__icontains=q) | 
         Q(name__icontains=q) | 
-        Q(descriptions__icontains=q)
+        Q(description__icontains=q)
     )
     room_count = rooms.count()
     room_messages = Message.objects.filter(Q(room__topic__name__icontains=q))
@@ -66,7 +64,7 @@ def createRoom(request):
             host=request.user,
             topic=topic,
             name=request.POST.get('name'),
-            descriptions=request.POST.get('descriptions')
+            description=request.POST.get('description')
         )
         return redirect('home')
     context = {'form': form, 'topics': topics}
@@ -87,7 +85,7 @@ def updateRoom(request, pk):
         topic, created = Topic.objects.get_or_create(name=topic_name)
         room.name = request.POST.get('name')
         room.topic = topic
-        room.descriptions = request.POST.get('descriptions')
+        room.description = request.POST.get('description')
         room.save()
         return redirect('home')
     context = {'form': form, 'topics': topics, 'room': room}
@@ -111,28 +109,28 @@ def loginPage(request):
         return redirect('home')
     
     if request.method == 'POST':
-        username = request.POST.get('username')
-        if username:
-            username = username.lower()
+        email = request.POST.get('email')
+        if email:
+            email = email.lower()
         
         password = request.POST.get('password')
-        print(username, password)
+        print(email, password)
 
         try:
             # Use the User bulit-in model to see if the user exists
-            user = User.objects.get(username=username)
+            user = User.objects.get(email=email)
         except Exception:
             # If the user does not exist, send a flash message to the user
             messages.error(request, 'User does not exist')
 
-        user = authenticate(request, username=username, password=password)
+        user = authenticate(request, email=email, password=password)
         # If the user exists, log the user in
         if user is not None:
             login(request, user)
             return redirect('home')
         # Else, send a flash message to the user
         else:
-            messages.error(request, 'Username OR password does not exist')
+            messages.error(request, 'Email OR password does not exist')
     context = {'page': page}
     return render(request, 'base/login_register.html', context)
 
@@ -141,9 +139,9 @@ def logoutUser(request):
     return redirect('home')
 
 def registerPage(request):
-    form = UserCreationForm()
+    form = MyUserCreationForm()
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form =  MyUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
             user.username = user.username.lower()

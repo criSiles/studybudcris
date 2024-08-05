@@ -1,11 +1,18 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser
+class User(AbstractUser):
+    name = models.CharField(null=True, max_length=200)
+    email = models.EmailField(null=True, unique=True)
+    bio = models.TextField(null=True)
+    avatar = models.ImageField(null=True, default="avatar.svg")
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
 
 # Create your models here.
 class Topic(models.Model):
     name = models.CharField(max_length=200)
 
-    def __str___(self):
+    def __str__(self):
         return self.name
 
 class Room(models.Model):
@@ -17,7 +24,7 @@ class Room(models.Model):
     # This attribute is type TextField, it only stores large strings (text), 
     # null=True means that the db can have a instance of this model if this attribute is empty, by default is set to False.
     # blank=True means that the form can be submitted without this attribute, by default is set to False.
-    descriptions = models.TextField(null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
     participants = models.ManyToManyField(User, blank=True, related_name='participants')
     # Every time an instance of this model is updated, this attribute will be set to the current time everytime.
     updated = models.DateTimeField(auto_now=True)
@@ -28,7 +35,7 @@ class Room(models.Model):
         # This array is made to order the rooms by the updated attribute, the '-' means that is going to be ordered in descending order (new first).
         ordering = ['-updated', '-created']
 
-    def __str___(self):
+    def __str__(self):
         return self.name
 
 
