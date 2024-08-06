@@ -181,5 +181,5 @@ def topicsPage(request):
     return render(request, 'base/topics.html', {'topics': topics})
 
 def activityPage(request):
-    room_messages = Message.objects.all()
+    room_messages = Message.objects.all()[0:4]
     return render(request, 'base/activity.html', {'room_messages': room_messages})
