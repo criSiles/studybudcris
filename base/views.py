@@ -20,7 +20,7 @@ def home(request):
         Q(description__icontains=q)
     )
     room_count = rooms.count()
-    room_messages = Message.objects.filter(Q(room__topic__name__icontains=q))
+    room_messages = Message.objects.filter(Q(room__topic__name__icontains=q))[0:4]
     # this Topic.objects.all() is used to get all the topics from the database, but we only want to get the first 5
     topics = Topic.objects.all()[0:5]
     context = {'rooms': rooms, 'topics': topics, 'room_count': room_count, 'room_messages': room_messages}
