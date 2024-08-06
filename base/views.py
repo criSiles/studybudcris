@@ -136,7 +136,7 @@ def loginPage(request):
 
 def logoutUser(request):
     logout(request)
-    return redirect('home')
+    return redirect('login')
 
 def registerPage(request):
     form = MyUserCreationForm()
